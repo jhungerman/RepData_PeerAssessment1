@@ -18,3 +18,13 @@ meanSteps <- mean(stepsByDay$steps)
 medSteps <- median(stepsByDay$steps)
 cat("Mean steps per day: ", meanSteps)
 cat("\nMedian steps per day: ", medSteps)
+#aggrefate and average to get average steps per 5 minute interval
+avgInt <- aggregate(steps ~ interval, activity, mean)
+#create and print a line time series plot to show average steps over 5 minute intervals
+intLine <- ggplot(avgInt, aes(x=interval, y=steps)) + geom_line() + geom_point() + labs(title = "Time Series of Average Steps per 5 Minute Interval",x = "5 Minute Interval",y = "Average Steps") + theme(plot.title = element_text(hjust=0.5))
+print(intLine)
+#find the maximum average steps for a 5 minute interval, strip the values into new variables, print the result to the console
+maxInt <- avgInt[which(avgInt$steps==max(avgInt$steps)),]
+maxIntRge <- maxInt$interval
+maxIntVal <- maxInt$steps
+cat("\nMaximum Interval and Steps: ", maxIntRge, " - ", maxIntVal)
