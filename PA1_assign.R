@@ -1,13 +1,13 @@
 #load packages
 library(knitr)
 library(dplyr)
-library(xtable)
 library(ggplot2)
-library(tidyr)
+library(gridExtra)
 #import data
 activity <- read.csv(file="activity.csv", header = TRUE, stringsAsFactors = FALSE)
 #change the date variable from character to date
 activity$date <- as.Date(activity$date, "%Y-%m-%d")
+
 #aggregate and sum to achieve total steps per day
 stepsByDay <- aggregate(steps ~ date, activity, sum)
 #create and print a histogram of steps per day
@@ -18,7 +18,8 @@ meanSteps <- mean(stepsByDay$steps)
 medSteps <- median(stepsByDay$steps)
 cat("Mean steps per day: ", meanSteps)
 cat("\nMedian steps per day: ", medSteps)
-#aggrefate and average to get average steps per 5 minute interval
+
+#aggregate and average to get average steps per 5 minute interval
 avgInt <- aggregate(steps ~ interval, activity, mean)
 #create and print a line time series plot to show average steps over 5 minute intervals
 intLine <- ggplot(avgInt, aes(x=interval, y=steps)) + geom_line() + geom_point() + labs(title = "Time Series of Average Steps per 5 Minute Interval",x = "5 Minute Interval",y = "Average Steps") + theme(plot.title = element_text(hjust=0.5))
@@ -30,6 +31,7 @@ maxIntVal <- maxInt$steps
 cat("\nMaximum Interval and Steps: ", maxIntRge, " - ", maxIntVal)
 naInt <- sum(is.na(activity$steps))
 cat("\nMissing Values: ", naInt)
+
 #create merged data set that will use the average(mean) steps by interval to impute missing data
 impSteps <- merge(activity, avgInt, by = "interval")
 #transform the dataframe to impute missing values
@@ -44,3 +46,17 @@ meanStepsImp <- mean(stepsByDayImp$steps)
 medStepsImp <- median(stepsByDayImp$steps)
 cat("\nMean steps per day (after Impute): ", meanStepsImp)
 cat("\nMedian steps per day (after Impute): ", medStepsImp)
+
+#create dataframe to check for differences by day of the week using the imputed dataframe
+impSteps$weekday <- weekdays(impSteps$date, abbreviate = TRUE)
+#determine if weekday or weekend
+impSteps$daytype <- as.factor(ifelse(impSteps$weekday %in% c('Sat','Sun'), 'Weekend', 'Weekday'))
+#aggregate and average to get average steps per 5 minute interval for Weekdays
+avgIntWkd <- aggregate(steps ~ interval, impSteps[impSteps$daytype == 'Weekday',], mean)
+#create and print a line time series plot to show average steps over 5 minute intervals
+intLineWkd <- ggplot(avgIntWkd, aes(x=interval, y=steps)) + geom_line() + geom_point() + labs(title = "Time Series of Average Steps per 5 Minute Interval (Weekday)",x = "5 Minute Interval",y = "Average Steps") + theme(plot.title = element_text(hjust=0.5))
+#aggregate and average to get average steps per 5 minute interval for Weekends
+avgIntWke <- aggregate(steps ~ interval, impSteps[impSteps$daytype == 'Weekend',], mean)
+#create and print a line time series plot to show average steps over 5 minute intervals
+intLineWke <- ggplot(avgIntWke, aes(x=interval, y=steps)) + geom_line() + geom_point() + labs(title = "Time Series of Average Steps per 5 Minute Interval (Weekend)",x = "5 Minute Interval",y = "Average Steps") + theme(plot.title = element_text(hjust=0.5))
+grid.arrange(intLineWkd, intLineWke, nrow = 2)
