@@ -28,3 +28,19 @@ maxInt <- avgInt[which(avgInt$steps==max(avgInt$steps)),]
 maxIntRge <- maxInt$interval
 maxIntVal <- maxInt$steps
 cat("\nMaximum Interval and Steps: ", maxIntRge, " - ", maxIntVal)
+naInt <- sum(is.na(activity$steps))
+cat("\nMissing Values: ", naInt)
+#create merged data set that will use the average(mean) steps by interval to impute missing data
+impSteps <- merge(activity, avgInt, by = "interval")
+#transform the dataframe to impute missing values
+impSteps <- transform(impSteps, steps = ifelse(is.na(steps.x),steps.y,steps.x))
+#choose and reorder columns to match activity dataframe, while sorting by date and interval
+impSteps <- impSteps[order(impSteps$date, impSteps$interval),c(1, 5, 3)]
+#follow previous steps to aggregate & sum total steps, produce histogram, and print info to the console
+stepsByDayImp <- aggregate(steps ~ date, impSteps, sum)
+stepHistImp <- ggplot(stepsByDayImp, aes(steps)) + geom_histogram(binwidth = 2500) + labs(title = "Total Steps per Day (Imputed)",x = "Steps", y = "Number of Days") + theme(plot.title = element_text(hjust=0.5))
+print(stepHistImp)
+meanStepsImp <- mean(stepsByDayImp$steps)
+medStepsImp <- median(stepsByDayImp$steps)
+cat("\nMean steps per day (after Impute): ", meanStepsImp)
+cat("\nMedian steps per day (after Impute): ", medStepsImp)
